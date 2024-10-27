@@ -44,9 +44,10 @@ def compute_embedding(text):
     return embedding[0].cpu().numpy()
 
 
-# Function to generate text
+# Function to generate only new tokens as text
 def generate_text(text, temperature=0.1, max_new_tokens=25):
     inputs = tokenizer([text], return_tensors="pt", padding=True)
+    input_length = inputs['input_ids'].shape[1]  # Get length of the input text
     with torch.no_grad():
         outputs = model.generate(
             inputs['input_ids'].cuda(),
@@ -55,7 +56,9 @@ def generate_text(text, temperature=0.1, max_new_tokens=25):
             attention_mask=inputs['attention_mask'].cuda(),
             pad_token_id=tokenizer.eos_token_id
         )
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # Decode only the newly generated tokens (excluding input text tokens)
+    generated_text = tokenizer.decode(outputs[0][input_length:], skip_special_tokens=True)
+    return generated_text
 
 
 # Flask route for computing embedding or generating text
