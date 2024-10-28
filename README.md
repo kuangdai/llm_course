@@ -1,5 +1,7 @@
 # llm_course
 
+This repo is under development.
+
 ### Environment
 
 ```shell
