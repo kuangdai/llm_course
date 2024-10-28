@@ -85,14 +85,14 @@ def embedding_endpoint():
 
 # To test the server for embedding computation:
 """
-curl -X POST http://localhost:7777/compute_embedding \
+curl -X POST http://localhost:7777/my_llama3 \
      -H "Content-Type: application/json" \
      -d '{"text": "Sample text to test embedding or generation", "returns_embedding": true}'
 """
 
 # To test the server for text generation:
 """
-curl -X POST http://localhost:7777/compute_embedding \
+curl -X POST http://localhost:7777/my_llama3 \
      -H "Content-Type: application/json" \
      -d '{
            "text": "Sample text to generate inference output",
