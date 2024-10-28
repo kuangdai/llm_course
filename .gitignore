@@ -163,5 +163,4 @@ cython_debug/
 .DS_Store
 
 # project
-data_large_files
-knowledge_bases
+data/knowledge_bases
