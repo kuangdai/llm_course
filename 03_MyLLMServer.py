@@ -62,7 +62,7 @@ def generate_text(text, temperature=0.1, max_new_tokens=25):
 
 
 # Flask route for computing embedding or generating text
-@app.route("/compute_embedding", methods=["POST"])
+@app.route("/my_llama3", methods=["POST"])
 def embedding_endpoint():
     data = request.json
     text = data.get("text", "")
