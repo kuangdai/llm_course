@@ -61,42 +61,49 @@ def generate_text(text, temperature=0.1, max_new_tokens=25):
     return generated_text
 
 
-# Flask route for computing embedding or generating text
-@app.route("/my_llama3", methods=["POST"])
-def embedding_endpoint():
+# Route for computing embeddings
+@app.route("/embed_llama3", methods=["POST"])
+def embed_llama3():
     data = request.json
     text = data.get("text", "")
-    returns_embedding = data.get("returns_embedding", True)
 
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    if returns_embedding:
-        # Compute and return embedding
-        embedding = compute_embedding(text)
-        return jsonify({"embedding": embedding.tolist()})
-    else:
-        # Generate and return text
-        temperature = data.get("temperature", 0.1)
-        max_new_tokens = data.get("max_new_tokens", 50)
-        generated_text = generate_text(text, temperature=temperature, max_new_tokens=max_new_tokens)
-        return jsonify({"generated_text": generated_text})
+    # Compute and return embedding
+    embedding = compute_embedding(text)
+    return jsonify({"embedding": embedding.tolist()})
+
+
+# Route for generating text
+@app.route("/generate_llama3", methods=["POST"])
+def generate_llama3():
+    data = request.json
+    text = data.get("text", "")
+    temperature = data.get("temperature", 0.1)
+    max_new_tokens = data.get("max_new_tokens", 50)
+
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    # Generate and return text
+    generated_text = generate_text(text, temperature=temperature, max_new_tokens=max_new_tokens)
+    return jsonify({"generated_text": generated_text})
 
 
 # To test the server for embedding computation:
 """
-curl -X POST http://localhost:7777/my_llama3 \
+curl -X POST http://localhost:7777/embed_llama3 \
      -H "Content-Type: application/json" \
-     -d '{"text": "Sample text to test embedding or generation", "returns_embedding": true}'
+     -d '{"text": "Sample text to compute embedding"}'
 """
 
 # To test the server for text generation:
 """
-curl -X POST http://localhost:7777/my_llama3 \
+curl -X POST http://localhost:7777/generate_llama3 \
      -H "Content-Type: application/json" \
      -d '{
            "text": "Sample text to generate inference output",
-           "returns_embedding": false,
            "temperature": 0.7,
            "max_new_tokens": 50
          }'
