@@ -49,9 +49,9 @@ df = pd.DataFrame(loaded_npz['df'], columns=loaded_npz['columns'])
 def formatted(idx, include_tags=False):
     """ format poems """
     it = df.iloc[idx]
-    res = f'{it["Title"]}\n{it["Poet"]}\n--------\n\n{it["Poem"]}'
+    res = f'{it["Title"]}\n{it["Poet"]}\n\n{it["Poem"]}'
     if it["Tags"] and include_tags:
-        res += f'\n\n--------\nNotes: {it["Tags"]}'
+        res += f'\n\nNotes: {it["Tags"]}'
     return res
 
 
@@ -124,7 +124,7 @@ def retrieve_faiss_kernel(text, k):
     distances, indices = faiss_index.search(embedding.cpu().numpy(), k=k)
 
     # Return text
-    return [formatted(i) for i in indices]
+    return [formatted(i) for i in indices[0]]
 
 
 @app.route("/retrieve_faiss", methods=["POST"])
@@ -144,10 +144,7 @@ def retrieve_faiss():
 """
 curl -X POST http://localhost:7777/retrieve_faiss \
      -H "Content-Type: application/json" \
-     -d '{
-           "text": "I don't know how you were diverted\nYou were perverted, too",
-           "k": 1
-         }'
+     -d "{\"text\": \"I don't know how you were diverted\\nYou were perverted too\", \"k\": 1}"
 """
 
 # Run the Flask server
