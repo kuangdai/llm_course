@@ -1,3 +1,5 @@
+import pickle
+
 import faiss
 import numpy as np
 import pandas as pd
@@ -12,6 +14,7 @@ app = Flask(__name__)
 #########
 # Model #
 #########
+
 # Login to Huggingface
 hf_access_key = "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"  # noqa
 login(hf_access_key)
@@ -45,19 +48,39 @@ loaded_npz = np.load('data/input/poetry_data_clean.npz', allow_pickle=True)
 # Reconstruct the DataFrame using the saved data and columns
 df = pd.DataFrame(loaded_npz['df'], columns=loaded_npz['columns'])
 
+# Load Faiss index
+faiss_index = faiss.read_index("data/knowledge_bases/poetry_faiss.index")
 
-def formatted(idx, include_tags=False):
+# Load keyword data
+with open('data/knowledge_bases/poetry_unique_keywords.pkl', 'rb') as f:
+    unique_keywords_list = pickle.load(f)
+with open('data/knowledge_bases/poetry_forward_mapping.pkl', 'rb') as f:
+    forward_mapping = pickle.load(f)
+with open('data/knowledge_bases/poetry_inverse_mapping.pkl', 'rb') as f:
+    inverse_mapping = pickle.load(f)
+
+# Load NetworkX graph
+with open("data/knowledge_bases/poetry_keyword_graph.gpickle", "rb") as f:
+    kw_graph = pickle.load(f)
+
+
+def format_poems(idx, include_keywords=True, include_tags=False):
     """ format poems """
+    if hasattr(idx, "__len__"):
+        return [format_poems(i, include_keywords, include_tags) for i in idx]
     it = df.iloc[idx]
     res = f'{it["Title"]}\n{it["Poet"]}\n\n{it["Poem"]}'
+    if include_keywords:
+        res += f'\n\nKeywords: {unique_keywords_list[forward_mapping[idx]]}'
     if it["Tags"] and include_tags:
         res += f'\n\nNotes: {it["Tags"]}'
     return res
 
 
 ###################
-# Text generation #
+# Text Generation #
 ###################
+
 def generate_kernel(text, temperature=0.1, max_new_tokens=25):
     """Function to generate only new tokens as text"""
     inputs = tokenizer([text], return_tensors="pt", padding=True)
@@ -86,7 +109,7 @@ def generate():
 
     # Generate and return text
     generated_text = generate_kernel(text, temperature=temperature, max_new_tokens=max_new_tokens)
-    return jsonify({"generated": generated_text})
+    return jsonify({"generated_text": generated_text})
 
 
 # To test the server for text generation:
@@ -100,14 +123,12 @@ curl -X POST http://localhost:7777/generate \
          }'
 """
 
-#######################
-# Similarity retrival #
-#######################
-# Load Faiss index
-faiss_index = faiss.read_index("data/knowledge_bases/poetry_faiss.index")
 
+#############################
+# Similarity-based Retrival #
+#############################
 
-def retrieve_faiss_kernel(text, k):
+def retrieve_faiss_kernel(text, k, flatten=True):
     """Function to retrieve from faiss index"""
     # Compute embedding
     inputs = tokenizer([text], return_tensors="pt", padding=True)
@@ -123,8 +144,11 @@ def retrieve_faiss_kernel(text, k):
     # Retrieve indices
     distances, indices = faiss_index.search(embedding.cpu().numpy(), k=k)
 
-    # Return text
-    return [formatted(i) for i in indices[0]]
+    # Convert to text
+    poems = format_poems(indices, include_keywords=True)
+    if flatten:
+        poems = "\n\n----------------\n\n".join(poems)
+    return poems
 
 
 @app.route("/retrieve_faiss", methods=["POST"])
@@ -137,7 +161,7 @@ def retrieve_faiss():
         return jsonify({"error": "No text provided"}), 400
 
     # Compute and return embedding
-    return jsonify({"retrieved": retrieve_faiss_kernel(text, k)})
+    return jsonify({"retrieved_poems": retrieve_faiss_kernel(text, k, flatten=True)})
 
 
 # To test the server for similarity retrival:
@@ -146,6 +170,11 @@ curl -X POST http://localhost:7777/retrieve_faiss \
      -H "Content-Type: application/json" \
      -d "{\"text\": \"I don't know how you were diverted\\nYou were perverted too\", \"k\": 1}"
 """
+
+##########################
+# Keyword-based Retrival #
+##########################
+
 
 # Run the Flask server
 if __name__ == "__main__":
