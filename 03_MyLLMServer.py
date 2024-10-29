@@ -127,7 +127,7 @@ def retrieve_faiss_kernel(text, k):
     return [formatted(i) for i in indices]
 
 
-@app.route("/retrieve_faiss_llama3", methods=["POST"])
+@app.route("/retrieve_faiss", methods=["POST"])
 def retrieve_faiss():
     """Route to retrieve from faiss index"""
     data = request.json
@@ -142,11 +142,11 @@ def retrieve_faiss():
 
 # To test the server for similarity retrival:
 """
-curl -X POST http://localhost:7777/retrieve_faiss_llama3 \
+curl -X POST http://localhost:7777/retrieve_faiss \
      -H "Content-Type: application/json" \
      -d '{
-            "text": "I don't know how you were diverted\nYou were perverted, too",
-            "k": 1
+           "text": "I don't know how you were diverted\nYou were perverted, too",
+           "k": 1
          }'
 """
 
