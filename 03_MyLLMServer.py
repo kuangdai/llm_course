@@ -1,4 +1,28 @@
+"""
+This script sets up a local HTTP server using Flask to serve functionalities
+developed in Jupyter notebooks (01_Inference.ipynb and 02_KnowledgeBase.ipynb),
+focused on text generation and information retrieval.
+
+Main features include:
+
+1. **Text Generation**: Generates text based on a user-provided prompt using a
+   pre-trained language model with 4-bit quantization for memory efficiency.
+
+2. **Similarity-Based Retrieval**: Retrieves similar poems from a FAISS index
+   based on the embedding of the user query, allowing efficient nearest-neighbor
+   search across a large dataset.
+
+3. **Keyword-Based Retrieval**: Uses a NetworkX bipartite graph to perform
+   keyword-based poem retrieval, supporting multi-hop search and keyword inference
+   to find relevant content through graph traversal.
+
+The API provides endpoints for each of these functionalities, allowing integration
+with other applications or user interfaces.
+"""
+
+import json
 import pickle
+from collections import defaultdict, deque
 
 import faiss
 import numpy as np
@@ -15,8 +39,11 @@ app = Flask(__name__)
 # Model #
 #########
 
-# Login to Huggingface
-hf_access_key = "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"  # noqa
+# Load HuggingFace API key
+with open("api_keys.json", "r") as file:
+    hf_access_key = json.load(file).get("HF_ACCESS_KEY")
+
+# Login to HuggingFace
 login(hf_access_key)
 
 # Configure 4-bit quantization
@@ -39,16 +66,14 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 
 ###############
-# Poetry data #
+# Poetry Data #
 ###############
 
-# Load the .npz file with allow_pickle=True
+# Load poetry dataset
 loaded_npz = np.load('data/input/poetry_data_clean.npz', allow_pickle=True)
-
-# Reconstruct the DataFrame using the saved data and columns
 df = pd.DataFrame(loaded_npz['df'], columns=loaded_npz['columns'])
 
-# Load Faiss index
+# Load FAISS index
 faiss_index = faiss.read_index("data/knowledge_bases/poetry_faiss.index")
 
 # Load keyword data
@@ -61,11 +86,11 @@ with open('data/knowledge_bases/poetry_inverse_mapping.pkl', 'rb') as f:
 
 # Load NetworkX graph
 with open("data/knowledge_bases/poetry_keyword_graph.gpickle", "rb") as f:
-    kw_graph = pickle.load(f)
+    pk_graph = pickle.load(f)
 
 
 def format_poems(idx, include_keywords=True, include_tags=False):
-    """ format poems """
+    """Format poem text from DataFrame index"""
     if hasattr(idx, "__len__"):
         return [format_poems(i, include_keywords, include_tags) for i in idx]
     it = df.iloc[idx]
@@ -82,7 +107,7 @@ def format_poems(idx, include_keywords=True, include_tags=False):
 ###################
 
 def generate_kernel(text, temperature=0.1, max_new_tokens=25):
-    """Function to generate only new tokens as text"""
+    """Generate text based on input prompt."""
     inputs = tokenizer([text], return_tensors="pt", padding=True)
     with torch.no_grad():
         outputs = model.generate(
@@ -99,7 +124,7 @@ def generate_kernel(text, temperature=0.1, max_new_tokens=25):
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    """Route to generate"""
+    """Endpoint for text generation from a prompt."""
     data = request.json
     text = data.get("text", "")
     temperature = data.get("temperature", 0.1)
@@ -112,24 +137,12 @@ def generate():
     return jsonify({"generated_text": generated_text})
 
 
-# To test the server for text generation:
-"""
-curl -X POST http://localhost:7777/generate \
-     -H "Content-Type: application/json" \
-     -d '{
-           "text": "Hello. How are you today?",
-           "temperature": 0.7,
-           "max_new_tokens": 50
-         }'
-"""
-
-
 #############################
-# Similarity-based Retrival #
+# Similarity-Based Retrieval #
 #############################
 
-def retrieve_faiss_kernel(text, k, flatten=True):
-    """Function to retrieve from faiss index"""
+def retrieve_faiss_kernel(text, k=1, flatten=True):
+    """Retrieve poems similar to the input text using FAISS index."""
     # Compute embedding
     inputs = tokenizer([text], return_tensors="pt", padding=True)
     with torch.no_grad():
@@ -144,7 +157,7 @@ def retrieve_faiss_kernel(text, k, flatten=True):
     # Retrieve indices
     distances, indices = faiss_index.search(embedding.cpu().numpy(), k=k)
 
-    # Convert to text
+    # Convert to text format
     poems = format_poems(indices, include_keywords=True)
     if flatten:
         poems = "\n\n----------------\n\n".join(poems)
@@ -153,29 +166,103 @@ def retrieve_faiss_kernel(text, k, flatten=True):
 
 @app.route("/retrieve_faiss", methods=["POST"])
 def retrieve_faiss():
-    """Route to retrieve from faiss index"""
+    """Endpoint for similarity-based poem retrieval."""
     data = request.json
     text = data.get("text", "")
     k = data.get("k", 1)
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    # Compute and return embedding
+    # Compute and return poems
     return jsonify({"retrieved_poems": retrieve_faiss_kernel(text, k, flatten=True)})
 
 
-# To test the server for similarity retrival:
-"""
-curl -X POST http://localhost:7777/retrieve_faiss \
-     -H "Content-Type: application/json" \
-     -d "{\"text\": \"I don't know how you were diverted\\nYou were perverted too\", \"k\": 1}"
-"""
-
 ##########################
-# Keyword-based Retrival #
+# Keyword-Based Retrieval #
 ##########################
 
+def extract_keywords(text):
+    """Extract keywords from a given text."""
+    inputs = tokenizer(prompt_template % text, return_tensors="pt")
+    with torch.no_grad():
+        outputs = model.generate(
+            inputs['input_ids'].cuda(),
+            max_new_tokens=25, temperature=0.1,
+            attention_mask=inputs['attention_mask'].cuda(),
+            pad_token_id=tokenizer.eos_token_id
+        )
+    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True).split("YOUR ANSWER:")[-1].strip()
+    first_left_index = generated_text.find("[")
+    first_right_index = generated_text.find("]")
+    if first_left_index == -1 or first_right_index == -1:
+        return []  # Fallback if no brackets found
+    keywords_text = generated_text[first_left_index + 1:first_right_index]
+    return [keyword.strip() for keyword in keywords_text.split(",") if keyword.strip()]
 
-# Run the Flask server
+
+def retrieve_poem_ids(query_keywords, k=1, depth=2, depth_decay=0.5):
+    """Retrieve most relevant poems based on keywords from NetworkX graph."""
+    poem_scores = defaultdict(float)  # Dictionary to accumulate scores for each poem
+
+    for keyword in query_keywords:
+        if keyword not in pk_graph:
+            continue  # Skip keywords not present in the graph
+
+        # Perform BFS from the keyword node
+        queue = deque([(keyword, 1)])  # (current_node, current_depth)
+        visited = {keyword}
+
+        while queue:
+            current_node, current_depth = queue.popleft()
+            if current_depth > depth:
+                continue
+
+            # Check if the current node is a poem node (type int) and accumulate score
+            if isinstance(current_node, int):
+                decay = depth_decay ** (current_depth - 1)  # Decay based on depth
+                poem_scores[current_node] += decay
+
+            # Explore neighbors
+            for neighbor in pk_graph.neighbors(current_node):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, current_depth + 1))
+
+    # Sort poems by score in descending order and return the top-k poems
+    top_k_poems = sorted(poem_scores, key=poem_scores.get, reverse=True)[:k]
+    return top_k_poems
+
+
+def retrieve_nx_graph_kernel(text, k=1, depth=2, depth_decay=0.5, flatten=True):
+    """Retrieve poems from NetworkX graph based on keywords in input text."""
+    # Extract keywords from query
+    query_keywords = extract_keywords(text)
+
+    # Find most relevant poems based on keyword graph traversal
+    indices = retrieve_poem_ids(query_keywords, k, depth, depth_decay)
+
+    # Convert to text format
+    poems = format_poems(indices, include_keywords=True)
+    if flatten:
+        poems = "\n\n----------------\n\n".join(poems)
+    return poems
+
+
+@app.route("/retrieve_nx_graph", methods=["POST"])
+def retrieve_nx_graph():
+    """Endpoint for keyword-based retrieval from the NetworkX graph."""
+    data = request.json
+    text = data.get("text", "")
+    k = data.get("k", 1)
+    depth = data.get("depth", 2)
+    depth_decay = data.get("depth_decay", 0.5)
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    # Compute and return poems
+    return jsonify({"retrieved_poems": retrieve_nx_graph_kernel(text, k, depth, depth_decay, flatten=True)})
+
+
+# To run the Flask server, set the host to 0.0.0.0 to make it externally accessible
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=7777)
