@@ -8,11 +8,11 @@ Main features include:
 1. **Text Generation**: Generates text based on a user-provided prompt using a
    pre-trained language model with 4-bit quantization for memory efficiency.
 
-2. **Similarity-Based Retrieval**: Retrieves similar poems from a FAISS index
+2. **Similarity-based Retrieval**: Retrieves similar poems from a FAISS index
    based on the embedding of the user query, allowing efficient nearest-neighbor
    search across a large dataset.
 
-3. **Keyword-Based Retrieval**: Uses a NetworkX bipartite graph to perform
+3. **Keyword-based Retrieval**: Uses a NetworkX bipartite graph to perform
    keyword-based poem retrieval, supporting multi-hop search and keyword inference
    to find relevant content through graph traversal.
 
@@ -137,9 +137,9 @@ def generate():
     return jsonify({"generated_text": generated_text})
 
 
-#############################
-# Similarity-Based Retrieval #
-#############################
+##############################
+# Similarity-based Retrieval #
+##############################
 
 def retrieve_faiss_kernel(text, k=1, flatten=True):
     """Retrieve poems similar to the input text using FAISS index."""
@@ -177,9 +177,23 @@ def retrieve_faiss():
     return jsonify({"retrieved_poems": retrieve_faiss_kernel(text, k, flatten=True)})
 
 
-##########################
-# Keyword-Based Retrieval #
-##########################
+###########################
+# Keyword-based Retrieval #
+###########################
+
+# Template for keyword extraction prompt, asking the model to identify key nouns or verbs
+# from user input to perform a graph-based search in the NetworkX keyword graph.
+prompt_template = (
+    "Identify or infer up to 10 semantically meaningful keywords from the following conversation. "
+    "Prioritize information from the most recent conversation turns. "
+    "The keywords should be commonly used nouns or verbs. "
+    "Provide the keywords directly after `YOUR ANSWER:`, "
+    "formatted within brackets and separated by commas, such as "
+    "YOUR ANSWER: [teacher, classroom].\n"
+    "\n\n%s\n\n\n"
+    "YOUR ANSWER: ["
+)
+
 
 def extract_keywords(text):
     """Extract keywords from a given text."""
@@ -195,7 +209,7 @@ def extract_keywords(text):
     first_left_index = generated_text.find("[")
     first_right_index = generated_text.find("]")
     if first_left_index == -1 or first_right_index == -1:
-        return []  # Fallback if no brackets found
+        return []
     keywords_text = generated_text[first_left_index + 1:first_right_index]
     return [keyword.strip() for keyword in keywords_text.split(",") if keyword.strip()]
 
@@ -237,14 +251,22 @@ def retrieve_nx_graph_kernel(text, k=1, depth=2, depth_decay=0.5, flatten=True):
     """Retrieve poems from NetworkX graph based on keywords in input text."""
     # Extract keywords from query
     query_keywords = extract_keywords(text)
+    poems = ""
 
-    # Find most relevant poems based on keyword graph traversal
-    indices = retrieve_poem_ids(query_keywords, k, depth, depth_decay)
+    if query_keywords:
+        # Find most relevant poems based on keyword graph traversal
+        indices = retrieve_poem_ids(query_keywords, k, depth, depth_decay)
 
-    # Convert to text format
-    poems = format_poems(indices, include_keywords=True)
-    if flatten:
-        poems = "\n\n----------------\n\n".join(poems)
+        # Convert to text format if poems are found
+        if indices:
+            poems = format_poems(indices, include_keywords=True)
+            if flatten:
+                poems = "\n\n----------------\n\n".join(poems)
+
+    # Fallback message if no poems were found or if no keywords were extracted
+    if not poems:
+        poems = "No retrieval results found."
+
     return poems
 
 
