@@ -79,6 +79,7 @@ faiss_index = faiss.read_index("data/knowledge_bases/poetry_faiss.index")
 # Load keyword data
 with open('data/knowledge_bases/poetry_unique_keywords.pkl', 'rb') as f:
     unique_keywords_list = pickle.load(f)
+    unique_keywords_list = np.array(unique_keywords_list)
 with open('data/knowledge_bases/poetry_forward_mapping.pkl', 'rb') as f:
     forward_mapping = pickle.load(f)
 with open('data/knowledge_bases/poetry_inverse_mapping.pkl', 'rb') as f:
@@ -90,15 +91,27 @@ with open("data/knowledge_bases/poetry_keyword_graph.gpickle", "rb") as f:
 
 
 def format_poems(idx, include_keywords=True, include_tags=False):
-    """Format poem text from DataFrame index"""
+    """Format poem text from DataFrame index, removing leading and trailing spaces and newlines."""
     if hasattr(idx, "__len__"):
         return [format_poems(i, include_keywords, include_tags) for i in idx]
+
+    # Strip leading and trailing spaces and newlines
     it = df.iloc[idx]
-    res = f'{it["Title"]}\n{it["Poet"]}\n\n{it["Poem"]}'
+    title = it["Title"].strip()
+    poet = it["Poet"].strip()
+    poem = it["Poem"].strip()
+
+    # Construct formatted poem string
+    res = f'{title}\n{poet}\n\n{poem}'
+
+    # Optionally include keywords
     if include_keywords:
-        res += f'\n\nKeywords: {unique_keywords_list[forward_mapping[idx]]}'
-    if it["Tags"] and include_tags:
-        res += f'\n\nNotes: {it["Tags"]}'
+        res += f'\n\nKeywords: {unique_keywords_list[forward_mapping[idx]].tolist()}'
+
+    # Optionally include tags
+    if include_tags:
+        res += f'\n\nNotes: {it["Tags"].strip()}'
+
     return res
 
 
@@ -158,7 +171,7 @@ def retrieve_faiss_kernel(text, k=1, flatten=True):
     distances, indices = faiss_index.search(embedding.cpu().numpy(), k=k)
 
     # Convert to text format
-    poems = format_poems(indices, include_keywords=True)
+    poems = format_poems(indices[0], include_keywords=True)
     if flatten:
         poems = "\n\n----------------\n\n".join(poems)
     return poems
