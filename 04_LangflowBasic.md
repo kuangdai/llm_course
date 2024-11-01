@@ -3,7 +3,9 @@
 In this session, we will learn **LangFlow**, a powerful visual tool for creating GenAI workflows enhanced by 
 knowledge bases and multi-agent systems. We will start with a built-in template, introducing the core concept of 
 **Components**, the fundamental units for building GenAI systems. We will also cover component customization, 
-which is essential for real applications with complex data and workflows.
+which is essential for real applications with complex data and workflows. 
+
+The flow is saved at `flows/CustomMemoryChatbot.json` and can be uploaded to the LangFlow API.
 
 # Creating and Exposing an LLM Server
 
