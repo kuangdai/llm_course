@@ -37,7 +37,7 @@ Press CTRL+C to quit
 The model can now be accessed locally at `http://localhost:7777/`. You can test it with:
 
 ```shell
-curl -X POST http://localhost:7777/generate_llama3 \
+curl -X POST http://localhost:7777/generate \
      -H "Content-Type: application/json" \
      -d '{
            "text": "Isaac Newton is ",
@@ -168,7 +168,7 @@ class CustomLLMComponent(LCModelComponent):
     def build_model(self) -> LanguageModel:
         # Instantiate CustomLLM with the appropriate parameters
         return self.CustomLLM(
-            llm_server_url=(self.llm_server_url or "https://ABC.loca.lt") + "/generate_llama3",
+            llm_server_url=(self.llm_server_url or "https://ABC.loca.lt") + "/generate",
             temperature=self.temperature,
             max_new_tokens=self.max_new_tokens
         )
