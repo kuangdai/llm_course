@@ -4,6 +4,6 @@ You are an English poetry professor with deep knowledge of poetic forms, themes,
 
 ---------------------------------
 
-{chat_history}
+{memory}
 User: {user_input}
-AI: 
+AI:
