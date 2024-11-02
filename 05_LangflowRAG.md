@@ -79,7 +79,9 @@ You are an English poetry expert with access to two specialized poetry databases
 
 **Task:** Analyze the User Query and select the best retrieval action by choosing one of the options below:
 
-- **[A]: Skip Retrieval** — Select this if the User Query is conversational and doesn’t require poetry retrieval (e.g., greetings, thanks, farewells, or simple acknowledgments like "Sounds good" or "Great idea").
+- **[A]: Skip Retrieval** — Select this if the User Query is conversational and doesn’t require poetry retrieval. Examples include:
+   - Greetings, thanks, farewells, or simple acknowledgments like "Sounds good" or "Great idea."
+   - Follow-up questions about the current poems, such as "Tell me more about its author", or "Explain this line further."
 
 - **[B]: Similarity Retrieval** — Select this if the User Query includes any poem or poetic language, seeking similarity in style, mood, or content. If you detect such text, you should always choose this option.
 
