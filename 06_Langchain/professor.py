@@ -46,7 +46,8 @@ class ProfessorAgent:
         # Generate response using the conversation chain
         response = self.conversation_chain.run(
             input_retrieved_poems=input_retrieved_poems,
-            user_input=user_input
+            history=self.memory.load_memory_variables({})["history"],
+            input=user_input
         )
 
         return response
