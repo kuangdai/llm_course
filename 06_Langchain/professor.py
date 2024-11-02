@@ -1,5 +1,3 @@
-import re
-
 from langchain.chains import LLMChain
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
@@ -66,14 +64,16 @@ class ProfessorAgent:
             "input": user_input
         })
 
-        # Step 1: Ensure single-turn response by removing any multi-turn markers
-        response = re.split(r'\b(?:User|AI):\b', response)[0].strip()
+        # Step 1: Remove multi-turn conversation markers, keeping only the initial response
+        response = response.split("\nUser:")[0].split("\nAI:")[0].strip()
 
-        # Step 2: Truncate at the last complete sentence using sentence-ending punctuation
-        match = re.search(r'(.*?)([.?!…]|\.{3})\s*$', response)
-        if match:
-            # Keep up to the last sentence-ending punctuation
-            response = match.group(1) + match.group(2)
+        # Step 2: Check for sentence-ending punctuation in the response
+        sentence_endings = [".", "!", "?", "…", "..."]
+        if not any(response.endswith(p) for p in sentence_endings):
+            # If no sentence-ending punctuation, truncate to the last complete sentence
+            last_punctuation_index = max(response.rfind(p) for p in sentence_endings)
+            if last_punctuation_index != -1:
+                response = response[:last_punctuation_index + 1]
 
         # Update memory with user input and AI response
         self.memory.save_context(
