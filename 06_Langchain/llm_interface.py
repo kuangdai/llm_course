@@ -7,49 +7,49 @@ from langchain_core.language_models import BaseLLM
 
 
 class LLMInterface:
-    def __init__(self, config):
-        # Load configurations directly from config dictionary
-        self.config = config
-
-    def retrieve_faiss(self, text: str) -> str:
+    @staticmethod
+    def retrieve_faiss(text: str, server_url: str, retrieve_poem_count: int = 1) -> str:
         """Retrieve similar poems using FAISS-based similarity search."""
-        payload = {"text": text, "k": self.config.get("retrieve_poem_count", 1)}
+        payload = {"text": text, "k": retrieve_poem_count}
         headers = {"Content-Type": "application/json"}
         try:
-            response = requests.post(f"{self.config['server_url']}/retrieve_faiss", json=payload, headers=headers)
+            response = requests.post(f"{server_url}/retrieve_faiss", json=payload, headers=headers)
             response.raise_for_status()
             result = response.json()
             return result.get("retrieved_poems", "Error: No poems retrieved.")
         except requests.RequestException as e:
             return f"Error in retrieve_faiss: {e}"
 
-    def retrieve_nx_graph(self, text: str) -> str:
+    @staticmethod
+    def retrieve_nx_graph(text: str, server_url: str, retrieve_poem_count: int = 1, depth: int = 2,
+                          depth_decay: float = 0.5) -> str:
         """Retrieve poems based on keyword and graph traversal."""
         payload = {
             "text": text,
-            "k": self.config.get("retrieve_poem_count", 1),
-            "depth": self.config.get("retrieve_depth", 2),
-            "depth_decay": self.config.get("retrieve_depth_decay", 0.5)
+            "k": retrieve_poem_count,
+            "depth": depth,
+            "depth_decay": depth_decay
         }
         headers = {"Content-Type": "application/json"}
         try:
-            response = requests.post(f"{self.config['server_url']}/retrieve_nx_graph", json=payload, headers=headers)
+            response = requests.post(f"{server_url}/retrieve_nx_graph", json=payload, headers=headers)
             response.raise_for_status()
             result = response.json()
             return result.get("retrieved_poems", "Error: No poems retrieved.")
         except requests.RequestException as e:
             return f"Error in retrieve_nx_graph: {e}"
 
-    def generate(self, text: str) -> str:
+    @staticmethod
+    def generate(text: str, server_url: str, temperature: float = 0.5, max_new_tokens: int = 50) -> str:
         """Generate a response based on input text using the LLM."""
         payload = {
             "text": text,
-            "temperature": self.config.get("response_temperature", 0.5),
-            "max_new_tokens": self.config.get("response_max_new_tokens", 50)
+            "temperature": temperature,
+            "max_new_tokens": max_new_tokens
         }
         headers = {"Content-Type": "application/json"}
         try:
-            response = requests.post(f"{self.config['server_url']}/generate", json=payload, headers=headers)
+            response = requests.post(f"{server_url}/generate", json=payload, headers=headers)
             response.raise_for_status()
             result = response.json()
             return result.get("generated_text", "Error: No generated text returned.")
@@ -58,8 +58,9 @@ class LLMInterface:
 
 
 class CustomLLM(BaseLLM):
-    # Define the LLM interface as a class attribute
-    llm_interface: LLMInterface
+    server_url: str
+    temperature: float
+    max_new_tokens: int
 
     def _call(
             self,
@@ -69,10 +70,13 @@ class CustomLLM(BaseLLM):
             **kwargs: Any
     ) -> str:
         """Generate text from the custom LLM model."""
-        if not self.llm_interface:
-            raise ValueError("LLMInterface is not configured. Call CustomLLM.configure() first.")
-
-        result = self.llm_interface.generate(prompt)
+        # Directly call generate with class-level server_url, temperature, and max_new_tokens
+        result = LLMInterface.generate(
+            text=prompt,
+            server_url=self.server_url,
+            temperature=self.temperature,
+            max_new_tokens=self.max_new_tokens
+        )
         return result
 
     def _generate(
