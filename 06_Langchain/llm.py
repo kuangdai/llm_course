@@ -58,12 +58,7 @@ class LLMInterface:
 
 class CustomLLM(BaseLLM):
     # Define the LLM interface as a class attribute
-    llm_interface: Optional[LLMInterface] = None
-
-    @classmethod
-    def configure(cls, config):
-        """Class method to configure the LLM interface with a given config."""
-        cls.llm_interface = LLMInterface(config)
+    llm_interface: LLMInterface
 
     def _call(
             self,
