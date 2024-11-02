@@ -1,0 +1,11 @@
+{
+  "server_url": "http://localhost:7777",
+  "retrieve_temperature": 0.1,
+  "retrieve_max_new_tokens": 20,
+  "retrieve_poem_count": 1,
+  "retrieve_depth": 2,
+  "retrieve_depth_decay": 0.5,
+  "response_temperature": 0.5,
+  "response_max_new_tokens": 100,
+  "response_memory_token_limit": 1000
+}
