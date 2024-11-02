@@ -29,7 +29,7 @@ pip install bitsandbytes -U
 # Install additional libraries for structured knowledge bases
 pip install faiss-cpu networkx
 
-# Install langchain, langgraph
+# Install langchain and langgraph
 pip install langchain langgraph
 
 # Install vllm, a large library for language model inference
