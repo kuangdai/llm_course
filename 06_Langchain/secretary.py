@@ -1,8 +1,9 @@
+import json
 import re
 
 from langchain.prompts import PromptTemplate
 
-from llm import LLMInterface
+from llm_interface import LLMInterface
 
 
 def parse_choice(response):
@@ -24,7 +25,11 @@ def parse_choice(response):
 
 
 class SecretaryAgent:
-    def __init__(self, config):
+    def __init__(self):
+        # Load config from a JSON file
+        with open("config.json", "r") as config_file:
+            self.config = json.load(config_file)
+
         # Load prompt template from file
         with open("templates/intent.txt", "r") as file:
             template_content = file.read()
@@ -35,16 +40,18 @@ class SecretaryAgent:
             template=template_content
         )
 
-        # Initialize the LLM interface with the provided configuration
-        self.llm = LLMInterface(config)
-
     def retrieve(self, user_input):
         """Analyze user input to determine intent and perform the appropriate retrieval."""
         # Format the prompt with the user input
         formatted_prompt = self.intent_prompt.format(user_input=user_input)
 
         # Run the LLM to classify intent based on the prompt
-        response = self.llm.generate(formatted_prompt)
+        response = LLMInterface.generate(
+            text=formatted_prompt,
+            server_url=self.config.get("server_url", "http://localhost:7777"),
+            temperature=self.config.get("retrieve_temperature", 0.5),
+            max_new_tokens=self.config.get("retrieve_max_new_tokens", 20)
+        )
 
         # Parse the response to identify the retrieval action
         choice = parse_choice(response)
@@ -55,10 +62,20 @@ class SecretaryAgent:
             retrieval = ""
         elif choice == "B":
             # Perform similarity-based retrieval
-            retrieval = self.llm.retrieve_faiss(user_input)
+            retrieval = LLMInterface.retrieve_faiss(
+                text=user_input,
+                server_url=self.config.get("server_url", "http://localhost:7777"),
+                retrieve_poem_count=self.config.get("retrieve_poem_count", 1)
+            )
         elif choice == "C":
             # Perform keyword-based retrieval
-            retrieval = self.llm.retrieve_nx_graph(user_input)
+            retrieval = LLMInterface.retrieve_nx_graph(
+                text=user_input,
+                server_url=self.config.get("server_url", "http://localhost:7777"),
+                retrieve_poem_count=self.config.get("retrieve_poem_count", 1),
+                depth=self.config.get("retrieve_depth", 2),
+                depth_decay=self.config.get("retrieve_depth_decay", 0.5)
+            )
         else:
             retrieval = ""  # Redundant fallback, keeping for clarity
 
