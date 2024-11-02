@@ -8,6 +8,7 @@ from llm_interface import CustomLLM
 class ProfessorAgent:
     def __init__(self, config):
         self.config = config
+        self.last_retrieval = ""  # Save last retrieval to maintain context continuation
 
         # Load templates from files
         with open("templates/retrieval.txt", "r") as file:
@@ -25,7 +26,7 @@ class ProfessorAgent:
             template=template_conversation
         )
 
-        # Initialize LLM interface and memory with summary LLM
+        # Initialize LLM and memory with summary LLM
         summary_llm = CustomLLM(
             server_url=self.config.get("server_url", "http://localhost:7777"),
             temperature=self.config.get("summary_temperature", 0.1),
@@ -51,8 +52,17 @@ class ProfessorAgent:
 
     def chat(self, user_input, retrieval):
         """Generate a response using conversation chain, with optional retrieval context."""
+        # Process retrieval
+        if retrieval:
+            self.last_retrieval = retrieval
+        else:
+            retrieval = self.last_retrieval
+
         # Format the retrieval content if it exists
-        retrieved_poems_with_prompt = self.retrieval_prompt.format(retrieved_poems=retrieval) if retrieval else ""
+        retrieved_poems_with_prompt = (
+            self.retrieval_prompt.format(retrieved_poems=retrieval)
+            if retrieval else ""
+        )
 
         # Load conversation history from memory
         history = self.memory.load_memory_variables({}).get("history", "")
@@ -64,21 +74,28 @@ class ProfessorAgent:
             "input": user_input
         })
 
-        # Step 1: Remove multi-turn conversation markers, keeping only the initial response
-        response = response.split("\nUser:")[0].split("\nAI:")[0].strip()
-
-        # Step 2: Check for sentence-ending punctuation in the response
-        sentence_endings = [".", "!", "?", "…", "..."]
-        if not any(response.endswith(p) for p in sentence_endings):
-            # If no sentence-ending punctuation, truncate to the last complete sentence
-            last_punctuation_index = max(response.rfind(p) for p in sentence_endings)
-            if last_punctuation_index != -1:
-                response = response[:last_punctuation_index + 1]
+        # Clean and truncate the response if necessary
+        response = self.clean_response(response)
 
         # Update memory with user input and AI response
         self.memory.save_context(
             inputs={"input": user_input},
             outputs={"response": response}
         )
+
+        return response
+
+    @staticmethod
+    def clean_response(response):
+        """Helper to clean response text."""
+        # Step 1: Remove multi-turn markers, keeping only initial response
+        response = response.split("\nUser:")[0].split("\nAI:")[0].strip()
+
+        # Step 2: Check for sentence-ending punctuation
+        sentence_endings = [".", "!", "?", "…", "..."]
+        if not any(response.endswith(p) for p in sentence_endings):
+            last_punctuation_index = max(response.rfind(p) for p in sentence_endings)
+            if last_punctuation_index != -1:
+                response = response[:last_punctuation_index + 1]
 
         return response
