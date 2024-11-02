@@ -1,0 +1,3 @@
+Based on the user query, your secretary has retrieved the following poems to help enrich your response. Use these to provide relevant insights, analyze themes, or add context for the user’s query.
+Note: Your secretary will present the original poems to the user, so you do not need to include them verbatim in your answer.
+
