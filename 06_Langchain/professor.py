@@ -1,3 +1,5 @@
+import re
+
 from langchain.chains import LLMChain
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
@@ -63,6 +65,15 @@ class ProfessorAgent:
             "history": history,
             "input": user_input
         })
+
+        # Step 1: Ensure single-turn response by removing any multi-turn markers
+        response = re.split(r'\b(?:User|AI):\b', response)[0].strip()
+
+        # Step 2: Truncate at the last complete sentence using sentence-ending punctuation
+        match = re.search(r'(.*?)([.?!…]|\.{3})\s*$', response)
+        if match:
+            # Keep up to the last sentence-ending punctuation
+            response = match.group(1) + match.group(2)
 
         # Update memory with user input and AI response
         self.memory.save_context(
