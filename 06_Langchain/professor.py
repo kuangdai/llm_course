@@ -1,5 +1,3 @@
-import json
-
 from langchain.chains import LLMChain
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
@@ -8,10 +6,8 @@ from llm_interface import CustomLLM
 
 
 class ProfessorAgent:
-    def __init__(self):
-        # Load config from a JSON file
-        with open("config.json", "r") as config_file:
-            self.config = json.load(config_file)
+    def __init__(self, config):
+        self.config = config
 
         # Load templates from files
         with open("templates/retrieval.txt", "r") as file:

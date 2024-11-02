@@ -1,4 +1,3 @@
-import json
 import re
 
 from langchain.prompts import PromptTemplate
@@ -25,10 +24,8 @@ def parse_choice(response):
 
 
 class SecretaryAgent:
-    def __init__(self):
-        # Load config from a JSON file
-        with open("config.json", "r") as config_file:
-            self.config = json.load(config_file)
+    def __init__(self, config):
+        self.config = config
 
         # Load prompt template from file
         with open("templates/intent.txt", "r") as file:
