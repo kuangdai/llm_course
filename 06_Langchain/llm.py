@@ -1,4 +1,5 @@
 from typing import List, Optional, Any
+
 import requests
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from langchain.schema import LLMResult, Generation

@@ -1,5 +1,6 @@
 import json
 import os
+
 from professor import ProfessorAgent
 from secretary import SecretaryAgent
 

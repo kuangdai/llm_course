@@ -1,7 +1,7 @@
-import json
-from langchain.chains import ConversationChain
+from langchain.chains import LLMChain
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
+
 from llm import CustomLLM, LLMInterface
 
 
@@ -25,29 +25,38 @@ class ProfessorAgent:
 
         # Initialize LLM interface and memory
         llm_interface = LLMInterface(config)
+        self.llm = CustomLLM(llm_interface=llm_interface)
         self.memory = ConversationSummaryBufferMemory(
-            llm=CustomLLM(llm_interface=llm_interface),
+            llm=self.llm,
             max_token_limit=config["response_memory_token_limit"],
             ai_prefix="AI", human_prefix="User"
         )
 
-        # Initialize conversation chain with custom LLM and memory
-        self.conversation_chain = ConversationChain(
-            llm=CustomLLM(llm_interface=llm_interface),
-            memory=self.memory,
+        # Initialize LLMChain with custom memory handling
+        self.conversation_chain = LLMChain(
+            llm=self.llm,
             prompt=self.conversation_prompt,
         )
 
     def chat(self, user_input, retrieval):
         """Generate a response using conversation chain, with optional retrieval context."""
-        # Add retrieval content if it exists
+        # Format the retrieval content if it exists
         input_retrieved_poems = self.retrieval_prompt.format(retrieved_poems=retrieval) if retrieval else ""
 
-        # Generate response using the conversation chain
-        response = self.conversation_chain.run(
-            input_retrieved_poems=input_retrieved_poems,
-            history=self.memory.load_memory_variables({})["history"],
-            input=user_input
+        # Load conversation history from memory
+        history = self.memory.load_memory_variables({}).get("history", "")
+
+        # Generate response using the LLMChain, passing all required inputs
+        response = self.conversation_chain.run({
+            "input_retrieved_poems": input_retrieved_poems,
+            "history": history,
+            "input": user_input
+        })
+
+        # Update memory with user input and AI response
+        self.memory.save_context(
+            inputs={"input": user_input},
+            outputs={"response": response}
         )
 
         return response
