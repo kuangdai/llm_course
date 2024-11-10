@@ -55,4 +55,4 @@ sudo npm install -g localtunnel
 ```
 
 ## Acknowledgments
-This repository was developed by Kuangdai Leng (kuangdai.leng@stfc.ac.uk) with support from the NPRAISE program, funded by EPSRC.
+This repository was developed by Kuangdai Leng ([Email](kuangdai.leng@stfc.ac.uk)) with support from the NPRAISE program, funded by EPSRC.
