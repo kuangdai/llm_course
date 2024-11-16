@@ -28,7 +28,10 @@ pip install flask gdown jupyter matplotlib numpy pandas scipy spacy tqdm
 python -m spacy download en_core_web_sm
 
 # Step 5: Install PyTorch with audio and vision support for deep learning tasks
-pip install torch==2.4.0 torchaudio torchvision
+########################################
+# Please choose the right CUDA version #
+########################################
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # Step 6: Install Hugging Face libraries for working with language models and distributed training
 pip install huggingface_hub transformers accelerate
@@ -46,15 +49,17 @@ pip install langchain langgraph
 pip install vllm
 
 # Step 11: Install Localtunnel for public URL access (requires npm)
-# To install Node.js and npm if not already installed, use:
-# sudo apt update
-# sudo apt install -y nodejs npm
+# Install Node.js and npm if not already installed
+sudo apt update
+sudo apt install -y nodejs npm
 
 # Install Localtunnel globally using npm
 sudo npm install -g localtunnel
 
 # Step 12: Install Ollama
 curl -fsSL https://ollama.com/install.sh | sh
+# Download llama3.2:3b
+ollama pull llama3.2:3b
 ```
 
 ## Acknowledgments
