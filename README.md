@@ -52,6 +52,9 @@ pip install vllm
 
 # Install Localtunnel globally using npm
 sudo npm install -g localtunnel
+
+# Step 12: Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
 ```
 
 ## Acknowledgments
