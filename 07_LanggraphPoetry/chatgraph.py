@@ -65,6 +65,16 @@ class ChatAgent:
         self.user_input = user_input
         self.config = config
 
+        # Load prompt templates from files
+        self.intent_prompt = self.load_prompt_template(
+            "../06_LangchainPoetry/templates/intent.txt", ["user_input"])
+        self.retrieval_prompt = self.load_prompt_template(
+            "../06_LangchainPoetry/templates/retrieval.txt", ["retrieved_poems"])
+        self.conversation_prompt = self.load_prompt_template(
+            "../06_LangchainPoetry/templates/conversation.txt",
+            ["retrieved_poems_with_prompt", "history", "input"]
+        )
+
         # Initialize the nodes for decision-making and replying
         self.choice_agent = self.create_choice(self.llm)
         self.choice_node = functools.partial(self.node_choice,
@@ -84,28 +94,21 @@ class ChatAgent:
         chatgraph.add_edge("reply", END)
         self.chain = chatgraph.compile()
 
-        # Templates
-        # Load prompt template from file
-        with open("templates/intent.txt", "r") as file:
-            template_content = file.read()
-        with open("templates/retrieval.txt", "r") as file:
-            template_retrieval = file.read()
-        with open("templates/conversation.txt", "r") as file:
-            template_conversation = file.read()
+    @staticmethod
+    def load_prompt_template(file_path: str, input_variables: list) -> PromptTemplate:
+        """
+        Load a prompt template from a file.
 
-        # Define prompt templates
-        self.intent_prompt = PromptTemplate(
-            input_variables=["user_input"],
-            template=template_content
-        )
-        self.retrieval_prompt = PromptTemplate(
-            input_variables=["retrieved_poems"],
-            template=template_retrieval
-        )
-        self.conversation_prompt = PromptTemplate(
-            input_variables=["retrieved_poems_with_prompt", "history", "input"],
-            template=template_conversation
-        )
+        Args:
+            file_path (str): Path to the template file.
+            input_variables (list): List of input variables for the template.
+
+        Returns:
+            PromptTemplate: The loaded prompt template.
+        """
+        with open(file_path, "r") as file:
+            template_content = file.read()
+        return PromptTemplate(template=template_content, input_variables=input_variables)
 
     def node_choice(self, state: dict, agent, name: str) -> dict:
         """
