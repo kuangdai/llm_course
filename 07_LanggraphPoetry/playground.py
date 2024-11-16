@@ -22,6 +22,9 @@ ollama_model = ChatOllama(model="llama3.2:3b", base_url="http://localhost:11435"
 user_input = ""
 history = ""
 
+# Create a ChatAgent instance for the current user input
+chat_agent = ChatAgent(ollama_model, config)
+
 # Start the chat loop
 print("Type 'exit' to end the conversation.")
 while True:
@@ -34,8 +37,8 @@ while True:
     # Prefix user input with "User:" for history tracking
     user_message = "User:" + user_input
 
-    # Create a ChatAgent instance for the current user input
-    chat_agent = ChatAgent(ollama_model, history, user_message, config)
+    # Update chat state
+    chat_agent.update_chat(history, user_message)
 
     # Update the conversation history with the user's message
     history += user_message

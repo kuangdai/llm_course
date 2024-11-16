@@ -1,12 +1,8 @@
 import functools
-import operator
 import re
-from typing import Annotated, Sequence
+from typing import Sequence
 
-from langchain_core.messages import (
-    BaseMessage,
-    HumanMessage,
-)
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langgraph.graph import END, StateGraph
 from typing_extensions import TypedDict
@@ -16,7 +12,7 @@ from llm_interface import LLMInterface
 
 class ChatAgentState(TypedDict):
     """Defines the structure of the agent state during the chat session."""
-    messages: Annotated[Sequence[BaseMessage], operator.add]
+    messages: Sequence[BaseMessage]
     user_input: Sequence[BaseMessage]
     retrieved_poems_with_prompt: str
     history: str
@@ -50,42 +46,34 @@ def parse_choice(response: str) -> str:
 class ChatAgent:
     """Represents a chat agent with capabilities to handle poetry queries and retrieval tasks."""
 
-    def __init__(self, llm, history: str, user_input: str, config: dict) -> None:
+    def __init__(self, llm, config: dict) -> None:
         """
         Initialize the ChatAgent.
 
         Args:
             llm: The large language model interface.
-            history (str): The conversation history.
-            user_input (str): The current user input.
             config (dict): Configuration settings for the agent.
         """
         self.llm = llm
-        self.history = history
-        self.user_input = user_input
         self.config = config
-
-        # Load prompt templates from files
         self.intent_prompt = self.load_prompt_template(
-            "../06_LangchainPoetry/templates/intent.txt", ["user_input"])
+            "../06_LangchainPoetry/templates/intent.txt", ["user_input"]
+        )
         self.retrieval_prompt = self.load_prompt_template(
-            "../06_LangchainPoetry/templates/retrieval.txt", ["retrieved_poems"])
+            "../06_LangchainPoetry/templates/retrieval.txt", ["retrieved_poems"]
+        )
         self.conversation_prompt = self.load_prompt_template(
             "../06_LangchainPoetry/templates/conversation.txt",
             ["retrieved_poems_with_prompt", "history", "input"]
         )
-
-        # Initialize the nodes for decision-making and replying
         self.choice_agent = self.create_choice(self.llm)
-        self.choice_node = functools.partial(self.node_choice,
-                                             agent=self.choice_agent,
-                                             name="choice")
+        self.choice_node = functools.partial(
+            self.node_choice, agent=self.choice_agent, name="choice"
+        )
         self.reply_agent = self.create_reply(self.llm)
-        self.reply_node = functools.partial(self.node_reply,
-                                            agent=self.reply_agent,
-                                            name="reply")
-
-        # Create and configure the state graph
+        self.reply_node = functools.partial(
+            self.node_reply, agent=self.reply_agent, name="reply"
+        )
         chatgraph = StateGraph(ChatAgentState)
         chatgraph.add_node("choice", self.choice_node)
         chatgraph.add_node("reply", self.reply_node)
@@ -93,6 +81,12 @@ class ChatAgent:
         chatgraph.add_edge("choice", "reply")
         chatgraph.add_edge("reply", END)
         self.chain = chatgraph.compile()
+        self.history = ""
+        self.user_input = ""
+
+    def update_chat(self, history: str, user_input: str):
+        self.history = history
+        self.user_input = user_input
 
     @staticmethod
     def load_prompt_template(file_path: str, input_variables: list) -> PromptTemplate:
@@ -107,8 +101,7 @@ class ChatAgent:
             PromptTemplate: The loaded prompt template.
         """
         with open(file_path, "r") as file:
-            template_content = file.read()
-        return PromptTemplate(template=template_content, input_variables=input_variables)
+            return PromptTemplate(template=file.read(), input_variables=input_variables)
 
     def node_choice(self, state: dict, agent, name: str) -> dict:
         """
@@ -127,25 +120,24 @@ class ChatAgent:
         retrieved_content = ""
 
         if choice_result == "B":
-            # Use FAISS for similarity-based retrieval
             retrieved_content = LLMInterface.retrieve_faiss(
                 text=self.user_input,
                 server_url=self.config.get("server_url", "http://localhost:7777"),
-                retrieve_poem_count=self.config.get("retrieve_poem_count", 1)
+                retrieve_poem_count=self.config.get("retrieve_poem_count", 1),
             )
         elif choice_result == "C":
-            # Use NetworkX graph for keyword-based retrieval
             retrieved_content = LLMInterface.retrieve_nx_graph(
                 text=self.user_input,
                 server_url=self.config.get("server_url", "http://localhost:7777"),
                 retrieve_poem_count=self.config.get("retrieve_poem_count", 1),
                 depth=self.config.get("retrieve_depth", 2),
-                depth_decay=self.config.get("retrieve_depth_decay", 0.5)
+                depth_decay=self.config.get("retrieve_depth_decay", 0.5),
             )
 
         retrieved_poems_with_prompt = (
             self.retrieval_prompt.format(retrieved_poems=retrieved_content)
-            if retrieved_content else ""
+            if retrieved_content
+            else ""
         )
 
         return {
@@ -210,6 +202,6 @@ class ChatAgent:
             {
                 "user_input": [HumanMessage(content=self.user_input)],
             },
-            {"recursion_limit": 5}  # Limit recursion depth to avoid infinite loops
+            {"recursion_limit": 5},
         )
-        return final_state['AI_reply'].content
+        return final_state["AI_reply"].content
