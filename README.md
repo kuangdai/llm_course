@@ -44,7 +44,7 @@ pip install bitsandbytes -U
 pip install faiss-cpu networkx
 
 # Step 9: Install LangChain and LangGraph libraries for advanced LLM workflows
-pip install langchain langgraph
+pip install langchain langchain_community langgraph
 
 # Step 10: Install vLLM, optimized for high-performance language model inference
 pip install vllm
