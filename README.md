@@ -17,12 +17,12 @@ Run one of the following commands based on your CUDA version:
 
 For CUDA 12.1:
 ```shell
-sh install_cu121.sh
+. install_cu121.sh
 ```
 
 For CUDA 11.8:
 ```shell
-sh install_cu118.sh
+. install_cu118.sh
 ```
 
 ## Acknowledgments
