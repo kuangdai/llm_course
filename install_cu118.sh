@@ -11,7 +11,7 @@ pip install flask gdown jupyter matplotlib numpy pandas scipy spacy tqdm
 python -m spacy download en_core_web_sm
 
 # Step 5: Install PyTorch with audio and vision support for deep learning tasks
-pip install torch torchvision torchaudio
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # Step 6: Install Hugging Face libraries for working with language models and distributed training
 pip install huggingface_hub transformers accelerate
@@ -26,7 +26,10 @@ pip install faiss-cpu networkx
 pip install langchain langchain_community langgraph
 
 # Step 10: Install vLLM, optimized for high-performance language model inference
-pip install vllm
+# Install vLLM with CUDA 11.8.
+export VLLM_VERSION=0.6.1.post1
+export PYTHON_VERSION=310
+pip install https://github.com/vllm-project/vllm/releases/download/v${VLLM_VERSION}/vllm-${VLLM_VERSION}+cu118-cp${PYTHON_VERSION}-cp${PYTHON_VERSION}-manylinux1_x86_64.whl --extra-index-url https://download.pytorch.org/whl/cu118
 
 # Step 11: Install Localtunnel for public URL access (requires npm)
 # Install Node.js and npm if not already installed
