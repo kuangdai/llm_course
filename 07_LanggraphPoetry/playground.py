@@ -4,6 +4,13 @@ from langchain_community.chat_models import ChatOllama
 
 from chatgraph import ChatAgent
 
+#############################
+# Start OLLAMA server first #
+#############################
+"""
+$ OLLAMA_HOST=127.0.0.1:11435 ollama serve
+"""
+
 # Load configuration from a JSON file
 with open("config.json", "r") as config_file:
     config = json.load(config_file)
