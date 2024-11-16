@@ -11,7 +11,7 @@ pip install flask gdown jupyter matplotlib numpy pandas scipy spacy tqdm
 python -m spacy download en_core_web_sm
 
 # Step 5: Install PyTorch with audio and vision support for deep learning tasks
-pip install torch=2.4.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install torch==2.4.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 # Step 6: Install Hugging Face libraries for working with language models and distributed training
 pip install huggingface_hub transformers accelerate
