@@ -31,7 +31,8 @@ python -m spacy download en_core_web_sm
 ########################################
 # Please choose the right CUDA version #
 ########################################
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Use https://download.pytorch.org/whl/cu118 if you have CUDA 118
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # Step 6: Install Hugging Face libraries for working with language models and distributed training
 pip install huggingface_hub transformers accelerate
