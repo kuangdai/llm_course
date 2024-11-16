@@ -1,22 +1,17 @@
 import json
 
-from langchain_community.chat_models import ChatOllama
-
 from chatgraph import ChatAgent
-
-#############################
-# Start OLLAMA server first #
-#############################
-"""
-$ OLLAMA_HOST=127.0.0.1:11435 ollama serve
-"""
+from llm_interface import CustomLLM
 
 # Load configuration from a JSON file
 with open("config.json", "r") as config_file:
     config = json.load(config_file)
 
-# Initialize the Ollama model
-ollama_model = ChatOllama(model="llama3.2:3b", base_url="http://localhost:11435")
+llm_model = CustomLLM(
+    server_url=config.get("server_url", "http://localhost:7777"),
+    temperature=config.get("summary_temperature", 0.1),
+    max_new_tokens=config.get("summary_max_new_tokens", 500)
+)
 
 # Initialize user input and conversation history
 user_input = ""
@@ -35,7 +30,7 @@ while True:
     user_message = "User:" + user_input
 
     # Create a ChatAgent instance for the current user input
-    chat_agent = ChatAgent(ollama_model, history, user_message, config)
+    chat_agent = ChatAgent(llm_model, history, user_message, config)
 
     # Update the conversation history with the user's message
     history += user_message
