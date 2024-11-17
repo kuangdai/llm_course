@@ -21,10 +21,14 @@ with other applications or user interfaces.
 """
 
 import json
+import os
 import pickle
+import shutil
+import zipfile
 from collections import defaultdict, deque
 
 import faiss
+import gdown
 import numpy as np
 import pandas as pd
 import torch
@@ -34,6 +38,52 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
 # Initialize Flask app
 app = Flask(__name__)
+
+###############
+# Poetry Data #
+###############
+
+# Load poetry dataset
+loaded_npz = np.load('data/input/poetry_data_clean.npz', allow_pickle=True)
+df = pd.DataFrame(loaded_npz['df'], columns=loaded_npz['columns'])
+
+# Define file paths
+file_paths = [
+    "data/knowledge_bases/poetry_faiss.index",
+    "data/knowledge_bases/poetry_unique_keywords.pkl",
+    "data/knowledge_bases/poetry_forward_mapping.pkl",
+    "data/knowledge_bases/poetry_inverse_mapping.pkl",
+    "data/knowledge_bases/poetry_keyword_graph.gpickle"
+]
+
+# Check if any file is missing
+missing_files = [file for file in file_paths if not os.path.exists(file)]
+if missing_files:
+    print("Some files are missing. Downloading from Google Drive...")
+
+    # Google Drive file ID and download URL
+    file_id = "1hhi3Vc0ztcJIPdynE5XQ8L8kkJxnOYqE"
+    gdrive_url = f"https://drive.google.com/uc?id={file_id}"
+
+    # Download the zip file
+    output_zip = "data/knowledge_bases_data.zip"
+    gdown.download(gdrive_url, output_zip, quiet=False)
+
+    # Unzip the file
+    with zipfile.ZipFile(output_zip, 'r') as zip_ref:
+        zip_ref.extractall("data/knowledge_bases/")
+
+    # Remove the zip file after extraction
+    os.remove(output_zip)
+
+    # Remove __MACOSX folder if it exists
+    macosx_folder = "data/knowledge_bases/__MACOSX"
+    if os.path.exists(macosx_folder):
+        shutil.rmtree(macosx_folder)
+
+    print("Files downloaded and extracted successfully.")
+else:
+    print("All files are present. Proceeding with loading.")
 
 #########
 # Model #
@@ -64,14 +114,6 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype="auto",
     quantization_config=quantization_config
 )
-
-###############
-# Poetry Data #
-###############
-
-# Load poetry dataset
-loaded_npz = np.load('data/input/poetry_data_clean.npz', allow_pickle=True)
-df = pd.DataFrame(loaded_npz['df'], columns=loaded_npz['columns'])
 
 # Load FAISS index
 faiss_index = faiss.read_index("data/knowledge_bases/poetry_faiss.index")
