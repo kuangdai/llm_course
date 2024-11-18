@@ -1,5 +1,5 @@
 # Step 1: Create a Conda environment for the LLM course with Python 3.10
-conda create -n llm_course python=3.9 -y
+conda create -n llm_course python=3.10 -y
 
 # Step 2: Activate the Conda environment
 conda activate llm_course
