@@ -13,16 +13,11 @@ and creating multi-agent systems.
 - **07_LanggraphPoetry**: LangGraph implementation of the English poetry chatbot.
 
 ## Installation
-Run one of the following commands based on your CUDA version:
+Run one of the following commands based on your CUDA version, e.g.,
 
-For CUDA 12.1:
+For CUDA 12.4:
 ```shell
-. install_cu121.sh
-```
-
-For CUDA 11.8:
-```shell
-. install_cu118.sh
+. install_cu124.sh
 ```
 
 ## Acknowledgments
