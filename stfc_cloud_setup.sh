@@ -1,29 +1,7 @@
 #!/bin/bash
 
-# Initialize Conda and update shell
-echo "Initializing Conda..."
-conda init
-
 # Navigate to the home directory
 cd "$HOME"
-
-# Load the bash configuration file
-echo "Loading bash configuration..."
-source .bashrc
-
-# Create a Conda environment for the LLM course with Python 3.10
-ENV_NAME="llm_course"
-# Check if the environment exists and remove it
-if conda env list | grep -q "^$ENV_NAME\s"; then
-    echo "Environment '$ENV_NAME' already exists. Removing it..."
-    conda env remove -n "$ENV_NAME" -y
-fi
-echo "Creating Conda environment '$ENV_NAME'..."
-conda create -n "$ENV_NAME" python=3.10 -y
-
-# Activate the Conda environment
-echo "Activating environment '$ENV_NAME'..."
-conda activate "$ENV_NAME"
 
 # Install essential Python libraries
 echo "Installing essential Python libraries..."
@@ -67,13 +45,16 @@ echo "Setting up Ollama in '$OLLAMA_DIR'..."
 mkdir -p "$OLLAMA_DIR"
 wget --show-progress -qO- https://github.com/ollama/ollama/releases/download/v0.4.2/ollama-linux-amd64.tgz | tar -xz -C "$OLLAMA_DIR"
 
-# Download llama3.2:3b
-./ollama/bin/ollama pull llama3.2:3b
+# Start ollama serve in the background and capture its process ID
+ollama serve &
+SERVE_PID=$!
 
-# Add Conda environment to Jupyter kernel
-echo "Adding environment to Jupyter kernels..."
-python -m ipykernel install --user --name="$ENV_NAME" --display-name "Python (LLM Course)"
+# Pull the model
+sleep 2
+ollama pull llama3.2:3b
 
+# Kill the ollama serve process
+kill $SERVE_PID
 
 # Course repository
 REPO_URL="https://github.com/kuangdai/llm_course"
@@ -91,6 +72,6 @@ git clone "$REPO_URL" "$REPO_DIR"
 echo "Repository setup complete!"
 
 # Download Llama
-python llm_course/download_llama.py
+python llm_course/download_llama3_hf.py
 
 echo "Setup complete! The LLM environment is ready to use."
