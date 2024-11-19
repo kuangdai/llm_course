@@ -13,16 +13,25 @@ pip uninstall -y tensorflow
 echo ""
 echo "Installing essential Python libraries..."
 echo ""
-pip install --force-reinstall flask gdown jupyter matplotlib numpy pandas scipy spacy tqdm \
-    torch torchvision torchaudio \
-    huggingface_hub transformers accelerate \
-    faiss-cpu networkx langchain langchain_community langgraph vllm
+pip install --upgrade flask gdown jupyter matplotlib numpy pandas scipy spacy tqdm
 
-# Install bitsandbytes with force-reinstall and upgrade flag
+# Install PyTorch
+echo ""
+echo "Installing PyTorch..."
+echo ""
+pip install --upgrade torch torchvision torchaudio
+
+# Install HuggingFace libraries
+pip install --upgrade huggingface_hub transformers accelerate
+
+# Install bitsandbytes with -U
 echo ""
 echo "Installing bitsandbytes..."
 echo ""
-pip install --force-reinstall bitsandbytes -U
+pip install bitsandbytes -U
+
+# Install LLM libraries
+pip install --upgrade faiss-cpu networkx langchain langchain_community langgraph vllm
 
 # Download spaCy English language model
 echo ""
@@ -47,19 +56,6 @@ echo "Setting up Ollama in '$OLLAMA_DIR'..."
 echo ""
 mkdir -p "$OLLAMA_DIR"
 wget --quiet --show-progress -O- "$OLLAMA_RELEASE_URL" | tar -xz -C "$OLLAMA_DIR"
-
-# Start Ollama serve and pull the model
-echo ""
-echo "Starting Ollama serve and pulling the model..."
-echo ""
-"$OLLAMA_DIR/ollama" serve &
-SERVE_PID=$!
-
-sleep 2  # Allow serve to initialize
-"$OLLAMA_DIR/ollama" pull llama3.2:3b
-
-# Terminate the Ollama serve process
-kill $SERVE_PID
 
 # Clone or refresh the course repository
 echo ""
