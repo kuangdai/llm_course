@@ -67,13 +67,27 @@ echo "Setting up Ollama in '$OLLAMA_DIR'..."
 mkdir -p "$OLLAMA_DIR"
 wget --show-progress -qO- https://github.com/ollama/ollama/releases/download/v0.4.2/ollama-linux-amd64.tgz | tar -xz -C "$OLLAMA_DIR"
 
-# Clone the LLM course repository
-REPO_URL="https://github.com/kuangdai/llm_course"
-echo "Cloning LLM course repository from $REPO_URL..."
-git clone "$REPO_URL"
-
 # Add Conda environment to Jupyter kernel
 echo "Adding environment to Jupyter kernels..."
 python -m ipykernel install --user --name="$ENV_NAME" --display-name "Python (LLM Course)"
+
+
+# Course repository
+REPO_URL="https://github.com/kuangdai/llm_course"
+REPO_DIR="$HOME/llm_course"
+
+# Check if the repository directory exists and remove it
+if [ -d "$REPO_DIR" ]; then
+    echo "Repository directory '$REPO_DIR' already exists. Removing it..."
+    rm -rf "$REPO_DIR"
+fi
+
+# Clone the repository
+echo "Cloning LLM course repository from $REPO_URL into '$REPO_DIR'..."
+git clone "$REPO_URL" "$REPO_DIR"
+echo "Repository setup complete!"
+
+# Download Llama
+python llm_course/download_llama.py
 
 echo "Setup complete! The LLM environment is ready to use."

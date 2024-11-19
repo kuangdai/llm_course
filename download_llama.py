@@ -1,11 +1,19 @@
 import json
+from pathlib import Path
 
 import torch
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
+# Get the path of the current Python file
+current_file_path = Path(__file__).resolve()
+parent_path = current_file_path.parent
+
+# Construct the full path to api_keys.json
+api_keys_path = parent_path / "api_keys.json"
+
 # Read HF_ACCESS_KEY into hf_access_key
-with open("api_keys.json", "r") as file:
+with open(api_keys_path, "r") as file:
     hf_access_key = json.load(file).get("HF_ACCESS_KEY")
 
 # Login to HuggingFace
