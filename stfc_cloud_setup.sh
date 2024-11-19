@@ -67,6 +67,9 @@ echo "Setting up Ollama in '$OLLAMA_DIR'..."
 mkdir -p "$OLLAMA_DIR"
 wget --show-progress -qO- https://github.com/ollama/ollama/releases/download/v0.4.2/ollama-linux-amd64.tgz | tar -xz -C "$OLLAMA_DIR"
 
+# Download llama3.2:3b
+./ollama/bin/ollama pull llama3.2:3b
+
 # Add Conda environment to Jupyter kernel
 echo "Adding environment to Jupyter kernels..."
 python -m ipykernel install --user --name="$ENV_NAME" --display-name "Python (LLM Course)"
