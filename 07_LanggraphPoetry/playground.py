@@ -9,6 +9,7 @@ from chatgraph import ChatAgent
 #############################
 """
 $ ollama serve
+$ ollama pull llama3.2:3b
 """
 
 # Load configuration from a JSON file
