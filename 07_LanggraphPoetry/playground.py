@@ -8,7 +8,7 @@ from chatgraph import ChatAgent
 # Start OLLAMA server first #
 #############################
 """
-$ OLLAMA_HOST=127.0.0.1:11435 ollama serve
+$ ollama serve
 """
 
 # Load configuration from a JSON file
@@ -16,7 +16,7 @@ with open("config.json", "r") as config_file:
     config = json.load(config_file)
 
 # Initialize the Ollama model
-ollama_model = ChatOllama(model="llama3.2:3b", base_url="http://localhost:11435")
+ollama_model = ChatOllama(model="llama3.2:3b", base_url="http://localhost:11434")
 
 # Initialize user input and conversation history
 user_input = ""
