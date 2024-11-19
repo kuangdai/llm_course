@@ -38,8 +38,7 @@ REPO_DIR="$HOME/llm_course"
 rm -rf "$REPO_DIR"  # Remove if already exists
 git clone "$REPO_URL" "$REPO_DIR"
 
-# Download Llama 3-8B via course repository script
-echo -e "\nDownloading Llama from HuggingFace...\n"
+echo -e "\nDownloading Meta-Llama-3-8B-Instruct from HuggingFace...\n"
 python "$REPO_DIR/download_llama3_hf.py"
 
 echo -e "\nSetup complete! The LLM environment is ready to use.\n"
