@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Initialize Conda
+conda init
+
 # Navigate to the home directory
 cd $HOME
 
