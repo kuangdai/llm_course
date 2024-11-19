@@ -22,7 +22,7 @@ class ProfessorAgent:
             template=template_retrieval
         )
         self.conversation_prompt = PromptTemplate(
-            input_variables=["retrieved_poems_with_prompt", "history", "input"],
+            input_variables=["retrieved_poems_with_prompt", "history", "user_input"],
             template=template_conversation
         )
 
@@ -71,7 +71,7 @@ class ProfessorAgent:
         response = self.conversation_chain.run({
             "retrieved_poems_with_prompt": retrieved_poems_with_prompt,
             "history": history,
-            "input": user_input
+            "user_input": user_input
         })
 
         # Clean and truncate the response if necessary

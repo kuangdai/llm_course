@@ -5,5 +5,5 @@ You are an English poetry professor with deep knowledge of poetic forms, themes,
 ---------------------------------
 
 {history}
-User: {input}
+User: {user_input}
 AI:
