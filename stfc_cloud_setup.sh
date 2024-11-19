@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Navigate to the home directory
 cd "$HOME"
 
 echo -e "\nUninstalling conflicting libraries...\n"
@@ -33,7 +32,6 @@ OLLAMA_RELEASE_URL="https://github.com/ollama/ollama/releases/download/v0.4.2/ol
 mkdir -p "$OLLAMA_DIR"
 wget --quiet --show-progress -O- "$OLLAMA_RELEASE_URL" | tar -xz -C "$OLLAMA_DIR"
 
-# Clone or refresh the course repository
 echo -e "\nCloning repository...\n"
 REPO_URL="https://github.com/kuangdai/llm_course"
 REPO_DIR="$HOME/llm_course"
