@@ -13,6 +13,11 @@ source .bashrc
 
 # Create a Conda environment for the LLM course with Python 3.10
 ENV_NAME="llm_course"
+# Check if the environment exists and remove it
+if conda env list | grep -q "^$ENV_NAME\s"; then
+    echo "Environment '$ENV_NAME' already exists. Removing it..."
+    conda env remove -n "$ENV_NAME" -y
+fi
 echo "Creating Conda environment '$ENV_NAME'..."
 conda create -n "$ENV_NAME" python=3.10 -y
 
