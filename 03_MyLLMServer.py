@@ -35,6 +35,7 @@ import torch
 from flask import Flask, request, jsonify
 from huggingface_hub import login
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+import spacy
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -130,6 +131,9 @@ with open('data/knowledge_bases/poetry_inverse_mapping.pkl', 'rb') as f:
 # Load NetworkX graph
 with open("data/knowledge_bases/poetry_keyword_graph.gpickle", "rb") as f:
     pk_graph = pickle.load(f)
+
+# Prepare spacy
+nlp = spacy.load('en_core_web_sm')
 
 
 def format_poems(idx, include_keywords=True, include_tags=False):
@@ -266,7 +270,14 @@ def extract_keywords(text):
     if first_left_index == -1 or first_right_index == -1:
         return []
     keywords_text = generated_text[first_left_index + 1:first_right_index]
-    return [keyword.strip() for keyword in keywords_text.split(",") if keyword.strip()]
+    keywords = [keyword.strip() for keyword in keywords_text.split(",") if keyword.strip()]
+    filtered_keywords = []
+    for keyword in keywords:
+        # Process each keyword individually
+        doc = nlp(keyword)
+        if doc[0].pos_ in ['NOUN', 'PROPN', 'VERB']:  # filter
+            filtered_keywords.append(doc[0].lemma_)  # lemmatize
+    return filtered_keywords
 
 
 def retrieve_poem_ids(query_keywords, k=1, depth=2, depth_decay=0.5):
