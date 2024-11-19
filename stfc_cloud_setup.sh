@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Exit script on any error
-set -e
-
 # Initialize Conda and update shell
 echo "Initializing Conda..."
 conda init
