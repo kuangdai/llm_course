@@ -26,7 +26,7 @@ import pickle
 import shutil
 import zipfile
 from collections import defaultdict, deque
-
+import requests
 import faiss
 import gdown
 import numpy as np
@@ -95,7 +95,10 @@ with open("api_keys.json", "r") as file:
     hf_access_key = json.load(file).get("HF_ACCESS_KEY")
 
 # Login to HuggingFace
-login(hf_access_key)
+try:
+    login(hf_access_key)
+except requests.exceptions.HTTPError:
+    pass
 
 # Configure 4-bit quantization
 quantization_config = BitsAndBytesConfig(

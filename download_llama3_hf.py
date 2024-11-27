@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import requests
 import torch
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -17,7 +18,10 @@ with open(api_keys_path, "r") as file:
     hf_access_key = json.load(file).get("HF_ACCESS_KEY")
 
 # Login to HuggingFace
-login(hf_access_key)
+try:
+    login(hf_access_key)
+except requests.exceptions.HTTPError:
+    pass
 
 # Create a BitsAndBytesConfig for 4-bit quantization
 quantization_config = BitsAndBytesConfig(
