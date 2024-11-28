@@ -13,12 +13,7 @@ and creating multi-agent systems.
 - **07_LanggraphPoetry**: LangGraph implementation of the English poetry chatbot.
 
 ## Installation
-Run one of the following commands based on your CUDA version, e.g.,
-
-For CUDA 12.4:
-```shell
-. install_cu124.sh
-```
+Please refer to `stfc_cloud_setup.sh`.
 
 ## Acknowledgments
 This repository was developed by Kuangdai Leng ([Email](kuangdai.leng@stfc.ac.uk)) with support from the NPRAISE program, funded by EPSRC.
